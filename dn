@@ -1,0 +1,97 @@
+#!/bin/bash
+
+#USAGE info
+show_help() {
+ cat << EOF
+ Usage: ${0##*/} [-hds] [-f OUTFILE] [-c Custom_Time] Description
+ Write the date and description of done task in the specefied file by -f. The default file is done in your local home directory
+     
+ -h          display this help and exit
+ -f OUTFILE  write the result to OUTFILE instead of default Done file.
+ -s          reset Done file and make it empty
+ -d          Put the Day title in the file, regardless of existing Description
+ -c TIME     Dismess the current system time and specefies your desired time.
+ -w Message  Direct write of an message without any other tag
+ -p 	     Print the given file and exit
+       
+
+ Examples:
+	dn -c 9:15 -f TestDone Xob in kari bood ke anjam dadam
+	dn -c 9:15 -f TestDone "Hello World"
+	dn -f TestDone "Hi"
+	dn -d -f TestDone
+	dn -d 
+	dn -c "(4 Hour)" Being in a party
+	dn -s 	OR 	dn -sf TestDone	
+	dn -p
+	dn    # This adds the current time to the file
+	dn # This adds an empty decription entry to the Done file
+	dn -f TestNote -w "\Waked up at 9:30"
+	dn -w "\t Hi, this is a custom message with TAB"
+
+NOTE: 
+	This file doesn't support creation of non-existent file in the OUTFILE variable.
+	dn -w "\t\t * \Wake up" the "*" put a ls output in the file!!
+        for external use: DONEFILE=/run/media/sadid/DDesk/Workplace/WLFPS/Journ/Done.md
+AUTHOR:
+	Sadid Sahami <sadid _a_t_ ieee.org>
+
+EOF
+} 
+
+
+# Initialize our variables
+DONEFILE=/run/media/sadid/DDesk/Workplace/WLFPS/Journ/Done.md
+CusTime=0
+
+
+OPTIND=1 # Reset is necessary if getopts was used previously in the script.  It is a good idea to make this local in a function.
+
+# Read the options:
+
+while getopts "sdhc:f:pw:" opt; do
+ case "$opt" in
+	h) 
+		show_help
+		exit 0
+		;;	
+	d)	
+		echo -e "\t ## " $(date '+%a : %d %b %Y') >> $DONEFILE
+		CusTime=2
+		;;
+	c)	
+		custom_time=$OPTARG
+		CusTime=1
+		;;
+	f)	
+		DONEFILE=$OPTARG
+		;;
+	s)
+		echo "" > $DONEFILE #reset
+		exit 0
+		;;
+	w)
+		echo -e $OPTARG >> $DONEFILE
+		cat $DONEFILE	
+		exit 0
+		;;
+	p)
+		cat $DONEFILE
+		exit 0
+		;;
+ esac
+done
+
+shift "$((OPTIND-1))" 		# Shift off the options and optional --.
+
+
+if [ $CusTime = 0 ]; then
+	echo -e "\t\t *" $* "  " "<"$(date)">" >> $DONEFILE
+elif [ $CusTime = 1 ]; then
+	echo -e "\t\t *" $* "  " "<"$custom_time">" >> $DONEFILE 
+else
+	echo "NOTE: The day title is added and all other things except the file location is dicarded"
+fi
+
+cat $DONEFILE
+
